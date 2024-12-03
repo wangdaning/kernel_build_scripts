@@ -1,4 +1,15 @@
 #!/bin/bash
+set -e
+
+# Check if 'builds' folder exists, create it if not
+if [ ! -d "./builds" ]; then
+    echo "'builds' folder not found. Creating it..."
+    mkdir -p ./builds
+else
+    echo "'builds' folder already exists removing it."
+    rm -rf ./builds
+    mkdir -p ./builds
+fi
 
 # Create the root folder with the current date and time (AM/PM)
 cd ./builds
@@ -11,16 +22,15 @@ cd "$ROOT_DIR"
 echo "Cloning repositories..."
 git clone https://github.com/TheWildJames/android14-5.15.git
 git clone https://github.com/TheWildJames/AnyKernel3.git -b android14-5.15
-git clone https://github.com/TheWildJames/susfs4ksu.git -b gki-android14-5.15-1.5.2
+git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-5.15
 
 # Get the kernel
 echo "Get the kernel..."
-cp -r ../../android14-5.15 ./
 cd ./android14-5.15
-#repo init -u https://android.googlesource.com/kernel/manifest  --depth=1
-#mv manifest_12637676.xml .repo/manifests
-#repo init -m manifest_12637676.xml
-#repo sync --current-branch --no-tags -j$(nproc)
+repo init -u https://android.googlesource.com/kernel/manifest  --depth=1
+mv manifest_12637676.xml .repo/manifests
+repo init -m manifest_12637676.xml
+repo sync --current-branch --no-tags -j$(nproc)
 rm -rf ./common/android/abi_gki_protected_exports_aarch64
 rm -rf ./common/android/abi_gki_protected_exports_x86_64
 
@@ -44,7 +54,7 @@ patch -p1 < 50_add_susfs_in_gki-android14-5.15.patch
 
 #build Kernel
 cd ..
-sed -i "/stable_scmversion_cmd/s/-maybe-dirty/+/g" ./build/kernel/kleaf/impl/stamp.bzl
+sed -i "/stable_scmversion_cmd/s/-maybe-dirty/-Wild-Exclusive+/g" ./build/kernel/kleaf/impl/stamp.bzl
 sed -i '2s/check_defconfig//' ./common/build.config.gki
 echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
