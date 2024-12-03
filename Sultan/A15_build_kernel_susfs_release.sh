@@ -20,12 +20,44 @@ cd "$ROOT_DIR"
 echo "Cloning repositories..."
 git clone --recursive https://github.com/TheWildJames/android_kernel_google_zuma.git -b 15.0.0-sultan
 git clone https://github.com/TheWildJames/AnyKernel3.git -b 15.0.0-sultan
+git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-5.15
+
+echo "Applying SUSFS patches..."
+cd ./android_kernel_google_zuma
+cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
+cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-5.15.patch ./
+cp ../susfs4ksu/kernel_patches/fs/susfs.c ./fs/
+cp ../susfs4ksu/kernel_patches/include/linux/susfs.h ./include/linux/
+cp ../susfs4ksu/kernel_patches/fs/sus_su.c ./fs/
+cp ../susfs4ksu/kernel_patches/include/linux/sus_su.h ./include/linux/
+
+# Apply the patches
+cd ./KernelSU
+patch -p1 --fuzz=3 < 10_enable_susfs_for_ksu.patch
+cd ..
+patch -p1 --fuzz=3 < 50_add_susfs_in_gki-android14-5.15.patch
+
+# Add configuration settings for SUSFS
+echo "Adding configuration settings to gki_defconfig..."
+echo "CONFIG_KSU=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KPROBES=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_HAVE_KPROBES=y" >> ./arch/arm64/configs/gki_defconfig
+echo "CONFIG_KPROBE_EVENTS=y" >> ./arch/arm64/configs/gki_defconfig
 
 # Compile the kernel
 echo "Compiling the kernel..."
-cd ./android_kernel_google_zuma
 make zuma_defconfig -j$(nproc --all)
-make -j$(nproc)
+make -j$(nproc) 
 
 # Copy Image.lz4 and concatenate DTB files
 echo "Copying Image.lz4 and concatenating DTB files..."
