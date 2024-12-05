@@ -18,12 +18,16 @@ cd "$ROOT_DIR"
 
 # Clone the repositories into the root folder
 echo "Cloning repositories..."
-git clone --recursive https://github.com/TheWildJames/android_kernel_google_zuma.git -b 15.0.0-sultan
+git clone https://github.com/TheWildJames/android_kernel_google_zuma.git -b 15.0.0-sultan
 git clone https://github.com/TheWildJames/AnyKernel3.git -b 15.0.0-sultan
+
+# Apply KernelSU
+echo "Adding KernelSU..."
+cd ./android_kernel_google_zuma
+curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
 
 # Compile the kernel
 echo "Compiling the kernel..."
-cd ./android_kernel_google_zuma
 make zuma_defconfig -j$(nproc --all)
 make -j$(nproc)
 
