@@ -2,14 +2,14 @@
 set -e
 
 # Check if 'builds' folder exists, create it if not
-#if [ ! -d "./builds" ]; then
-#    echo "'builds' folder not found. Creating it..."
-#    mkdir -p ./builds
-#else
-#    echo "'builds' folder already exists removing it."
-#    rm -rf ./builds
-#    mkdir -p ./builds
-#fi
+if [ ! -d "./builds" ]; then
+    echo "'builds' folder not found. Creating it..."
+    mkdir -p ./builds
+else
+    echo "'builds' folder already exists removing it."
+    rm -rf ./builds
+    mkdir -p ./builds
+fi
 
 # Create the root folder with the current date and time (AM/PM)
 cd ./builds
@@ -68,6 +68,7 @@ echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defco
 echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
 cd ..
 sed -i "/stable_scmversion_cmd/s/-maybe-dirty/-Wild+/g" ./kernel_platform/build/kernel/kleaf/impl/stamp.bzl
+sed -i "s/dirty/'Wild+'/g" ./kernel_platform/common/scripts/setlocalversion
 sed -i '2s/check_defconfig//' ./kernel_platform/common/build.config.gki
 ./kernel_platform/oplus/build/oplus_build_kernel.sh pineapple gki
 
@@ -89,9 +90,9 @@ cd ..
 
 # GitHub Release using gh CLI
 REPO_OWNER="TheWildJames"         # Replace with your GitHub username
-REPO_NAME="OnePlus_Kernel"  # Replace with your repository name
+REPO_NAME="OnePlus_KernelSU_SUSFS"  # Replace with your repository name
 TAG_NAME="v$(date +'%Y.%m.%d-%H%M%S')"   # Unique tag with timestamp to ensure multiple releases on the same day
-RELEASE_NAME="OP12 android14-6.1 With KernelSU & SUSFS"  # Updated release name
+RELEASE_NAME="OP12 A15 android14-6.1 With KernelSU & SUSFS"  # Updated release name
 
 # Create the release using gh CLI (no need to include $ROOT_DIR)
 echo "Creating GitHub release for $RELEASE_NAME..."

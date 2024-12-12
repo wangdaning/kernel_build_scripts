@@ -13,7 +13,7 @@ fi
 
 # Create the root folder with the current date and time (AM/PM)
 cd ./builds
-ROOT_DIR="GKI-$(date +'%Y-%m-%d-%I-%M-%p')-release"
+ROOT_DIR="Xiaomi12-$(date +'%Y-%m-%d-%I-%M-%p')-release"
 echo "Creating root folder $ROOT_DIR..."
 mkdir -p "$ROOT_DIR"
 cd "$ROOT_DIR"
@@ -26,32 +26,34 @@ git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-5.15
 
 # Get the kernel
 echo "Get the kernel..."
-cp -r ../../android_gki_kernel_5.15_common ./
-cd ./android_gki_kernel_5.15_common
+mkdir xiaomi-8550-kernel
+cd ./xiaomi-8550-kernel
+repo init -u https://github.com/xiaomi-sm8550-kernel/kernel_manifest.git -b master
+repo sync -c -j$(nproc --all) --force-sync --no-clone-bundle --no-tags --optimized-fetch --prune
+
 #rm -rf ./common/android/abi_gki_protected_exports_aarch64
 #rm -rf ./common/android/abi_gki_protected_exports_x86_64
 
 # Add KernelSU
+cd ./kernel_platform
 curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-
-exit
 
 #add susfs
 echo "adding susfs"
-cd ..
-cp ./susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./android14-5.15/KernelSU/
-cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-5.15.patch ./android14-5.15/common/
-cp ./susfs4ksu/kernel_patches/fs/susfs.c ./android14-5.15/common/fs/
-cp ./susfs4ksu/kernel_patches/include/linux/susfs.h ./android14-5.15/common/include/linux/
-cp ./susfs4ksu/kernel_patches/fs/sus_su.c ./android14-5.15/common/fs/
-cp ./susfs4ksu/kernel_patches/include/linux/sus_su.h ./android14-5.15/common/include/linux/
-cd ./android14-5.15/KernelSU/
+cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
+cp ../../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-5.15.patch ./common/
+cp ../../susfs4ksu/kernel_patches/fs/susfs.c ./common/fs/
+cp ../../susfs4ksu/kernel_patches/include/linux/susfs.h ./common/include/linux/
+cp ../../susfs4ksu/kernel_patches/fs/sus_su.c ./common/fs/
+cp ../../susfs4ksu/kernel_patches/include/linux/sus_su.h ./common/include/linux/
+cd ./KernelSU/
 patch -p1 < 10_enable_susfs_for_ksu.patch
 cd ..
 cd ./common
 patch -p1 < 50_add_susfs_in_gki-android14-5.15.patch
 
-#build Kernel
+#Adding ksu and susfs options
+echo "Adding KSU and SUSFS options..."
 cd ..
 echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -64,8 +66,16 @@ echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconf
 echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
-make gki_defconfig
-make -j$(nproc)
+sed -i '2s/check_defconfig//' ./common/build.config.gki
+sed -i "s/dirty/'Wild+'/g" ./common/scripts/setlocalversion
+cd ..
+
+echo "Press Enter to continue..."
+read  # Waits for the user to press Enter
+
+# Building kernel
+echo "Building Kernel..."
+./build.sh kalama fuxi
 
 exit
 
@@ -78,7 +88,7 @@ echo "Navigating to AnyKernel3 directory..."
 cd ../AnyKernel3
 
 # Zip the files in the AnyKernel3 directory with a new naming convention
-ZIP_NAME="GKI-android14-5.15-KernelSU-SUSFS-$(date +'%Y-%m-%d-%H-%M-%S').zip"
+ZIP_NAME="Xiaomi-13-KernelSU-SUSFS-$(date +'%Y-%m-%d-%H-%M-%S').zip"
 echo "Creating zip file $ZIP_NAME..."
 zip -r "../$ZIP_NAME" ./*
 

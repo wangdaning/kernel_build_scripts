@@ -44,8 +44,6 @@ cp ./susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./android14
 cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-5.15.patch ./android14-5.15/common/
 cp ./susfs4ksu/kernel_patches/fs/susfs.c ./android14-5.15/common/fs/
 cp ./susfs4ksu/kernel_patches/include/linux/susfs.h ./android14-5.15/common/include/linux/
-cp ./susfs4ksu/kernel_patches/fs/sus_su.c ./android14-5.15/common/fs/
-cp ./susfs4ksu/kernel_patches/include/linux/sus_su.h ./android14-5.15/common/include/linux/
 cd ./android14-5.15/KernelSU/
 patch -p1 < 10_enable_susfs_for_ksu.patch
 cd ..
@@ -66,7 +64,7 @@ echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/gki_defconfi
 echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
+#echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
 tools/bazel build --config=fast //common:kernel_aarch64_dist
 
 # Copy Image.lz4

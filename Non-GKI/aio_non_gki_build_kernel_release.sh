@@ -17,14 +17,14 @@ else
 fi
 
 cd ./builds
-ROOT_DIR="GKI-AIO-$(date +'%Y-%m-%d-%I-%M-%p')-release"
+ROOT_DIR="Non-GKI-AIO-$(date +'%Y-%m-%d-%I-%M-%p')-release"
 echo "Creating root folder: $ROOT_DIR..."
 mkdir -p "$ROOT_DIR"
 cd "$ROOT_DIR"
 
 # Array with configurations (e.g., android-version-kernel-version-date)
 BUILD_CONFIGS=(
-    "android-msm-coral-4.14-android13"
+    "android-4.14-stable"
 )
 
 # Arrays to store generated zip files, grouped by androidversion-kernelversion
@@ -39,11 +39,17 @@ build_config() {
     echo "Creating folder for configuration: $CONFIG..."
     mkdir -p "$CONFIG"
     cd "$CONFIG"
+    
+    # Split the config details into individual components
+    IFS="-" read -r ANDROID_VERSION KERNEL_VERSION STABLE <<< "$CONFIG_DETAILS"
+    
+    # Formatted branch name for each build (e.g., android14-5.15-2024-01)
+    #FORMATTED_BRANCH="${ANDROID_VERSION}-${KERNEL_VERSION}"
 
     # Log file for this build in case of failure
     LOG_FILE="../${CONFIG}_build.log"
 
-    echo "Starting build for $CONFIG using branch $FORMATTED_BRANCH..."
+    echo "Starting build for $CONFIG..."
     # Check if AnyKernel3 repo exists, remove it if it does
     if [ -d "./AnyKernel3" ]; then
         echo "Removing existing AnyKernel3 directory..."
@@ -52,19 +58,13 @@ build_config() {
     echo "Cloning AnyKernel3 repository..."
     #git clone https://github.com/TheWildJames/AnyKernel3.git -b "${ANDROID_VERSION}-${KERNEL_VERSION}"
 
-    if [[ $CONFIG == "android-msm-coral-4.14-android13" ]]; then
-        KERNEL_VERSION="kernel-4.14"
-    else
-        KERNEL_VERSION="unknown"
-    fi
-
     # Check if susfs4ksu repo exists, remove it if it does
     if [ -d "./susfs4ksu" ]; then
         echo "Removing existing susfs4ksu directory..."
         rm -rf ./susfs4ksu
     fi
     echo "Cloning susfs4ksu repository..."
-    git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "${KERNEL_VERSION}"
+    git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "kernel-${KERNEL_VERSION}"
 
     # Setup directory for each build
     mkdir -p "$CONFIG"
@@ -72,13 +72,13 @@ build_config() {
 
     # Initialize and sync kernel source with updated repo commands
     echo "Initializing and syncing kernel source..."
-    repo init --depth=1 --u https://android.googlesource.com/kernel/manifest -b "${CONFIG}"
-    REMOTE_BRANCH=$(git ls-remote https://android.googlesource.com/kernel/common "${CONFIG}")
+    repo init --depth=1 --u https://android.googlesource.com/kernel/manifest -b "common-${CONFIG}"
+    REMOTE_BRANCH=$(git ls-remote https://android.googlesource.com/kernel/common ${CONFIG})
     DEFAULT_MANIFEST_PATH=.repo/manifests/default.xml
     
     # Check if the branch is deprecated and adjust the manifest
     if grep -q deprecated <<< $REMOTE_BRANCH; then
-        echo "Found deprecated branch: $FORMATTED_BRANCH"
+        echo "Found deprecated branch: $CONFIG"
         sed -i "s/\"${CONFIG}\"/\"deprecated\/${CONFIG}\"/g" $DEFAULT_MANIFEST_PATH
     fi
 
@@ -88,68 +88,81 @@ build_config() {
 
     # Apply KernelSU and SUSFS patches
     echo "Adding KernelSU..."
-    cd ./private/msm-google
     curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
 
     echo "Applying SUSFS patches..."
-    cp ../../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
-    cp ../../../susfs4ksu/kernel_patches/50_add_susfs_in_${KERNEL_VERSION}.patch ./
-    cp ../../../susfs4ksu/kernel_patches/fs/* ./fs/
-    cp ../../../susfs4ksu/kernel_patches/include/linux/* ./include/linux/
+    cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
+    cp ../susfs4ksu/kernel_patches/50_add_susfs_in_kernel-${KERNEL_VERSION}.patch ./common/
+    cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
+    cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
 
     # Apply the patches
     cd ./KernelSU
     patch -p1 -F 3 < 10_enable_susfs_for_ksu.patch
+    cd ../common
+    patch -p1 -F 3 < 50_add_susfs_in_kernel-${KERNEL_VERSION}.patch
     cd ..
-    patch -p1 -F 3 < 50_add_susfs_in_${KERNEL_VERSION}.patch
 
     # Add configuration settings for SUSFS
-    echo "Adding configuration settings to floral_defconfig..."
-    echo "CONFIG_KSU=y" >> ./arch/arm64/configs/floral_defconfig
-    echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/floral_defconfig
-    echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/floral_defconfig
-    echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/floral_defconfig
-    echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/floral_defconfig
-    echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/floral_defconfig
-    echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/floral_defconfig
-    echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/floral_defconfig
-    echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/floral_defconfig
-    echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/floral_defconfig
-    echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/floral_defconfig
+    echo "Adding configuration settings to defconfig..."
+    echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/defconfig
+    echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/defconfig
+    echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/defconfig
+    echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./common/arch/arm64/configs/defconfig
+    echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./common/arch/arm64/configs/defconfig
+    echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/defconfig
+    echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/defconfig
+    echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/defconfig
+    echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/defconfig
+    echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/defconfig
+    echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/defconfig
 
     # Build kernel
     echo "Building kernel for $CONFIG..."
 
     # Check if build.sh exists, if it does, run the default build script
-    if [ -e build_floral.sh ]; then
-        echo "building floral"
-        sed -i 's/check_defconfig && //' ./build.config.floral_no-cfi
-        sed -i "s/dirty/'Wild+'/g" ./scripts/setlocalversion
-        cd ../../
-        ./build_floral.sh
+    if [ -e build/build.sh ]; then
+        echo "build.sh found, running default build script..."
+        # Modify config files for the default build process
+        #sed -i '2s/check_defconfig//' ./common/build.config
+        sed -i "s/dirty/'Wild+'/g" ./common/scripts/setlocalversion
+        LTO=thin BUILD_CONFIG=common/build.config.aarch64 build/build.sh
+
+        exit
 
         # Copying to AnyKernel3
         echo "Copying Image.lz4 to $CONFIG/AnyKernel3..."
 
         # Check if the boot.img file exists
-        if [ "$CONFIG" = "android-msm-coral-4.14-android13" ]; then
+        if [ "$ANDROID_VERSION" = "android12" ]; then
             mkdir bootimgs
-            cp ./out/android-msm-pixel-4.14/dist/Image ./bootimgs
-            cp ./out/android-msm-pixel-4.14/dist/Image.lz4 ./bootimgs
-            cp ./out/android-msm-pixel-4.14/dist/Image ../
-            cp ./out/android-msm-pixel-4.14/dist/Image.lz4 ../
-            gzip -n -k -f -9 ./out/android-msm-pixel-4.14/dist/Image >../Image.gz
+            cp ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image ./bootimgs
+            cp ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image.lz4 ./bootimgs
+            cp ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image ../
+            cp ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image.lz4 ../
+            gzip -n -k -f -9 ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image >../Image.gz
             cd ./bootimgs
             
-            unzip gki-kernel.zip && rm gki-kernel.zip
-            echo 'Unpack prebuilt boot.img'
-            unpack_bootimg.py --boot_img="./boot-5.10.img"
-            
-            echo 'Building Image.gz'
-            gzip -n -k -f -9 Image >Image.gz
+            GKI_URL=https://dl.google.com/android/gki/gki-certified-boot-android12-5.10-"${DATE}"_r1.zip
+            FALLBACK_URL=https://dl.google.com/android/gki/gki-certified-boot-android12-5.10-2023-01_r1.zip
+            status=$(curl -sL -w "%{http_code}" "$GKI_URL" -o /dev/null)
                 
-            echo 'Building boot.img'
-            mkbootimg.py --header_version 4 --kernel Image --output boot.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${DATE}"
+            if [ "$status" = "200" ]; then
+                curl -Lo gki-kernel.zip "$GKI_URL"
+            else
+                echo "[+] $GKI_URL not found, using $FALLBACK_URL"
+                curl -Lo gki-kernel.zip "$FALLBACK_URL"
+                fi
+                
+                unzip gki-kernel.zip && rm gki-kernel.zip
+                echo 'Unpack prebuilt boot.img'
+                unpack_bootimg.py --boot_img="./boot-5.10.img"
+                
+                echo 'Building Image.gz'
+                gzip -n -k -f -9 Image >Image.gz
+                
+                echo 'Building boot.img'
+                mkbootimg.py --header_version 4 --kernel Image --output boot.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${DATE}"
                 avbtool add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
                 cp ./boot.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot.img
                 

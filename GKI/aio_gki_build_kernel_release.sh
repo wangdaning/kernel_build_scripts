@@ -4,7 +4,7 @@
 set -e
 
 #DO NOT GO OVER 4
-MAX_CONCURRENT_BUILDS=4
+MAX_CONCURRENT_BUILDS=1
 
 # Check if 'builds' folder exists, create it if not
 if [ ! -d "./builds" ]; then
@@ -24,47 +24,46 @@ cd "$ROOT_DIR"
 
 # Array with configurations (e.g., android-version-kernel-version-date)
 BUILD_CONFIGS=(
-    #"android12-5.10-198-2024-01"
-    #"android12-5.10-205-2024-03"
-    #"android12-5.10-209-2024-05"
-    #"android12-5.10-218-2024-08"
+    "android12-5.10-198-2024-01"
+    "android12-5.10-205-2024-03"
+    "android12-5.10-209-2024-05"
+    "android12-5.10-218-2024-08"
 
-    #"android13-5.10-189-2023-11"
-    #"android13-5.10-198-2024-01"
-    #"android13-5.10-205-2024-03"
-    #"android13-5.10-209-2024-05"
-    #"android13-5.10-210-2024-06"
-    #"android13-5.10-214-2024-07"
-    #"android13-5.10-218-2024-08"
+    "android13-5.10-189-2023-11"
+    "android13-5.10-198-2024-01"
+    "android13-5.10-205-2024-03"
+    "android13-5.10-209-2024-05"
+    "android13-5.10-210-2024-06"
+    "android13-5.10-214-2024-07"
+    "android13-5.10-218-2024-08"
 
-    #"android13-5.15-41-2022-11 "
-    #"android13-5.15-94-2023-05"
-    #"android13-5.15-123-2023-11"
-    #"android13-5.15-137-2024-01"
-    #"android13-5.15-144-2024-03"
-    #"android13-5.15-148-2024-05"
-    #"android13-5.15-149-2024-07"
-    #"android13-5.15-151-2024-08"
-    #"android13-5.15-167-2024-11"
+    "android13-5.15-94-2023-05"
+    "android13-5.15-123-2023-11"
+    "android13-5.15-137-2024-01"
+    "android13-5.15-144-2024-03"
+    "android13-5.15-148-2024-05"
+    "android13-5.15-149-2024-07"
+    "android13-5.15-151-2024-08"
+    "android13-5.15-167-2024-11"
     
-    #"android14-5.15-131-2023-11"
-    #"android14-5.15-137-2024-01"
-    #"android14-5.15-144-2024-03"
-    #"android14-5.15-148-2024-05"
-    #"android14-5.15-149-2024-06"
-    #"android14-5.15-153-2024-07"
-    #"android14-5.15-158-2024-08"
-    #"android14-5.15-167-2024-11"
+    "android14-5.15-131-2023-11"
+    "android14-5.15-137-2024-01"
+    "android14-5.15-144-2024-03"
+    "android14-5.15-148-2024-05"
+    "android14-5.15-149-2024-06"
+    "android14-5.15-153-2024-07"
+    "android14-5.15-158-2024-08"
+    "android14-5.15-167-2024-11"
 
-    #"android14-6.1-25-2023-10"
-    #"android14-6.1-43-2023-11"
-    #"android14-6.1-57-2024-01"
-    #"android14-6.1-68-2024-03"
-    #"android14-6.1-75-2024-05"
-    #"android14-6.1-78-2024-06"
-    #"android14-6.1-84-2024-07"
-    #"android14-6.1-90-2024-08"
-    #"android14-6.1-112-2024-11"
+    "android14-6.1-25-2023-10"
+    "android14-6.1-43-2023-11"
+    "android14-6.1-57-2024-01"
+    "android14-6.1-68-2024-03"
+    "android14-6.1-75-2024-05"
+    "android14-6.1-78-2024-06"
+    "android14-6.1-84-2024-07"
+    "android14-6.1-90-2024-08"
+    "android14-6.1-112-2024-11"
     
     #"android15-6.6-30-2024-08"
 )
@@ -109,7 +108,18 @@ build_config() {
     git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "gki-${ANDROID_VERSION}-${KERNEL_VERSION}"
 
     # Setup directory for each build
-    mkdir -p "$CONFIG"
+    SOURCE_DIR="/home/james/android_kernels/$CONFIG"
+
+    # Check if the source directory exists and is a directory
+    if [ -d "$SOURCE_DIR" ]; then
+        # Copy the directory to the current working directory
+        echo "Copying $SOURCE_DIR to ./"
+        cp -r "$SOURCE_DIR" ./
+        echo "Successfully copied $SOURCE_DIR to ./"
+    else
+        mkdir -p "$CONFIG"
+    fi
+    
     cd "$CONFIG"
 
     # Initialize and sync kernel source with updated repo commands
@@ -126,7 +136,7 @@ build_config() {
 
     # Verify repo version and sync
     repo --version
-    repo --trace sync -c -j$(nproc --all) --no-tags
+    repo --trace sync -c -j$(nproc --all) --no-tags --fail-fast
 
     # Apply KernelSU and SUSFS patches
     echo "Adding KernelSU..."
@@ -161,6 +171,8 @@ build_config() {
     echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
 
+
+
     # Build kernel
     echo "Building kernel for $CONFIG..."
 
@@ -182,7 +194,7 @@ build_config() {
             cp ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image.lz4 ./bootimgs
             cp ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image ../
             cp ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image.lz4 ../
-            gzip -n -k -f -9 ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image >../Image.gz
+            gzip -n -k -f -9 ../Image >../Image.gz
             cd ./bootimgs
             
             GKI_URL=https://dl.google.com/android/gki/gki-certified-boot-android12-5.10-"${DATE}"_r1.zip
@@ -194,7 +206,7 @@ build_config() {
             else
                 echo "[+] $GKI_URL not found, using $FALLBACK_URL"
                 curl -Lo gki-kernel.zip "$FALLBACK_URL"
-                fi
+            fi
                 
                 unzip gki-kernel.zip && rm gki-kernel.zip
                 echo 'Unpack prebuilt boot.img'
@@ -225,7 +237,7 @@ build_config() {
             cp ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image.lz4 ./bootimgs
             cp ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image ../
             cp ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image.lz4 ../
-            gzip -n -k -f -9 ./out/${ANDROID_VERSION}-${KERNEL_VERSION}/dist/Image >../Image.gz
+            gzip -n -k -f -9 ../Image >../Image.gz
             cd ./bootimgs
 
             echo 'Building Image.gz'
@@ -265,7 +277,7 @@ build_config() {
             cp ./bazel-bin/common/kernel_aarch64/Image.lz4 ./bootimgs
             cp ./bazel-bin/common/kernel_aarch64/Image ../
             cp ./bazel-bin/common/kernel_aarch64/Image.lz4 ../
-            gzip -n -k -f -9 ./bazel-bin/common/kernel_aarch64/Image >../Image.gz
+            gzip -n -k -f -9 ../Image >../Image.gz
             cd ./bootimgs
 
             echo 'Building Image.gz'
@@ -312,7 +324,7 @@ build_config() {
 
     # Delete the $CONFIG folder after building
     echo "Deleting $CONFIG folder..."
-    rm -rf "$CONFIG"
+    #rm -rf "$CONFIG"
 }
 
 # Concurrent build management

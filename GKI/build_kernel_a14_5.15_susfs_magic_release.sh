@@ -13,48 +13,51 @@ fi
 
 # Create the root folder with the current date and time (AM/PM)
 cd ./builds
-ROOT_DIR="OP12-A15-$(date +'%Y-%m-%d-%I-%M-%p')-release"
+ROOT_DIR="GKI-$(date +'%Y-%m-%d-%I-%M-%p')-release"
 echo "Creating root folder $ROOT_DIR..."
 mkdir -p "$ROOT_DIR"
 cd "$ROOT_DIR"
 
 # Clone the repositories into the root folder
 echo "Cloning repositories..."
+#git clone https://github.com/TheWildJames/android14-5.15.git
 git clone https://github.com/TheWildJames/AnyKernel3.git -b android14-5.15
-git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1
+git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-5.15
 
 # Get the kernel
 echo "Get the kernel..."
-mkdir oneplus12_u
-cd ./oneplus12_u
-repo init -u https://github.com/OnePlusOSS/kernel_manifest.git -b oneplus/sm8650 -m oneplus12_v.xml
-repo sync -j$(nproc)
-
-rm -rf ./kernel_platform/common/android/abi_gki_protected_exports_*
+mkdir android14-5.15
+cp -r ~/android_kernels/android14-5.15-2024-11-r1/* ./android14-5.15
+cd ./android14-5.15
+#repo init -u https://android.googlesource.com/kernel/manifest  --depth=1
+#mv manifest_12637676.xml .repo/manifests
+#repo init -m manifest_12637676.xml
+#repo sync --current-branch --no-tags -j$(nproc)
+rm -rf ./common/android/abi_gki_protected_exports_aarch64
+rm -rf ./common/android/abi_gki_protected_exports_x86_64
 
 # Add KernelSU
-echo "adding ksu"
-cd ./kernel_platform
 curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-cd ./KernelSU/kernel
-sed -i 's/ccflags-y += -DKSU_VERSION=16/ccflags-y += -DKSU_VERSION=11989/' ./Makefile
-cd ../../
+rm -rf ./KernelSU
+git clone https://github.com/5ec1cff/KernelSU.git
 
 #add susfs
 echo "adding susfs"
-cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
-cp ../../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ./common/
-cp ../../susfs4ksu/kernel_patches/fs/susfs.c ./common/fs/
-cp ../../susfs4ksu/kernel_patches/include/linux/susfs.h ./common/include/linux/
-cp ../../susfs4ksu/kernel_patches/fs/sus_su.c ./common/fs/
-cp ../../susfs4ksu/kernel_patches/include/linux/sus_su.h ./common/include/linux/
-cd ./KernelSU/
+cd ..
+cp ./susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./android14-5.15/KernelSU/
+cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-5.15.patch ./android14-5.15/common/
+cp ./susfs4ksu/kernel_patches/fs/susfs.c ./android14-5.15/common/fs/
+cp ./susfs4ksu/kernel_patches/include/linux/susfs.h ./android14-5.15/common/include/linux/
+cd ./android14-5.15/KernelSU/
 patch -p1 < 10_enable_susfs_for_ksu.patch
-cd ../common
-patch -p1 < 50_add_susfs_in_gki-android14-6.1.patch
+cd ..
+cd ./common
+patch -p1 < 50_add_susfs_in_gki-android14-5.15.patch
 
 #build Kernel
 cd ..
+sed -i "/stable_scmversion_cmd/s/-maybe-dirty/-Wild-Exclusive+/g" ./build/kernel/kleaf/impl/stamp.bzl
+sed -i '2s/check_defconfig//' ./common/build.config.gki
 echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -65,22 +68,19 @@ echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/gki_defconfi
 echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
-cd ..
-sed -i "s/dirty/Wild+/g" ./kernel_platform/build/kernel/kleaf/impl/stamp.bzl
-sed -i '2s/check_defconfig//' ./kernel_platform/common/build.config.gki
-./kernel_platform/oplus/build/oplus_build_kernel.sh pineapple gki
+#echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
+tools/bazel build --config=fast //common:kernel_aarch64_dist
 
 # Copy Image.lz4
-echo "Copying Image"
-cp ./out/dist/Image ../AnyKernel3/Image
+echo "Copying Image.lz4"
+cp ./bazel-bin/common/kernel_aarch64/Image.lz4 ../AnyKernel3/Image.lz4
 
 # Navigate to the AnyKernel3 directory
 echo "Navigating to AnyKernel3 directory..."
 cd ../AnyKernel3
 
 # Zip the files in the AnyKernel3 directory with a new naming convention
-ZIP_NAME="Anykernel3-OP-A14-android14-6.1-KernelSU-SUSFS-$(date +'%Y-%m-%d-%H-%M-%S').zip"
+ZIP_NAME="GKI-android14-5.15-KernelSU-SUSFS-$(date +'%Y-%m-%d-%H-%M-%S').zip"
 echo "Creating zip file $ZIP_NAME..."
 zip -r "../$ZIP_NAME" ./*
 
@@ -89,9 +89,9 @@ cd ..
 
 # GitHub Release using gh CLI
 REPO_OWNER="TheWildJames"         # Replace with your GitHub username
-REPO_NAME="OnePlus_KernelSU_SUSFS"  # Replace with your repository name
+REPO_NAME="android14-5.15"  # Replace with your repository name
 TAG_NAME="v$(date +'%Y.%m.%d-%H%M%S')"   # Unique tag with timestamp to ensure multiple releases on the same day
-RELEASE_NAME="OP12 A14 android14-6.1 With KernelSU & SUSFS"  # Updated release name
+RELEASE_NAME="GKI-android14-5.15 With KernelSU & SUSFS & Magic Mount"  # Updated release name
 
 # Create the release using gh CLI (no need to include $ROOT_DIR)
 echo "Creating GitHub release for $RELEASE_NAME..."
