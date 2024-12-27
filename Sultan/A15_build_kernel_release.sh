@@ -25,6 +25,7 @@ git clone https://github.com/TheWildJames/AnyKernel3.git -b 15.0.0-sultan
 echo "Adding KernelSU..."
 cd ./android_kernel_google_zuma
 curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
+patch -p1 < ./ksu_hooks.patch
 
 # Compile the kernel
 echo "Compiling the kernel..."

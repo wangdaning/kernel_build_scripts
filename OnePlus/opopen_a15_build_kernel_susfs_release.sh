@@ -7,62 +7,54 @@ if [ ! -d "./builds" ]; then
     mkdir -p ./builds
 else
     echo "'builds' folder already exists removing it."
-    #rm -rf ./builds
-    #mkdir -p ./builds
+    rm -rf ./builds
+    mkdir -p ./builds
 fi
 
 # Create the root folder with the current date and time (AM/PM)
 cd ./builds
-ROOT_DIR="GKI-$(date +'%Y-%m-%d-%I-%M-%p')-release"
+ROOT_DIR="OP12-A15-$(date +'%Y-%m-%d-%I-%M-%p')-release"
 echo "Creating root folder $ROOT_DIR..."
 mkdir -p "$ROOT_DIR"
 cd "$ROOT_DIR"
 
 # Clone the repositories into the root folder
 echo "Cloning repositories..."
-#git clone https://github.com/TheWildJames/android14-5.15.git
 git clone https://github.com/TheWildJames/AnyKernel3.git -b android14-5.15
-git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-5.15
-git clone https://github.com/TheWildJames/lineage_kernel_patches.git
+git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1
 
 # Get the kernel
 echo "Get the kernel..."
-mkdir ./android14-5.15
-cp -r ~/android_kernels/android14-5.15-2024-11-r1/* ./android14-5.15
-cd ./android14-5.15
-#repo init -u https://android.googlesource.com/kernel/manifest  --depth=1
-#mv manifest_12637676.xml .repo/manifests
-#repo init -m manifest_12637676.xml
-#repo sync --current-branch --no-tags -j$(nproc)
-rm -rf ./common/android/abi_gki_protected_exports_aarch64
-rm -rf ./common/android/abi_gki_protected_exports_x86_64
+mkdir oneplus_open_v
+cd ./oneplus_open_v
+repo init -u https://github.com/TheWildJames/oneplus_kernel_manifest.git -b oneplus/sm8550 -m oneplus_open_v.xml
+repo sync -j$(nproc)
+
+rm -rf ./kernel_platform/common/android/abi_gki_protected_exports_*
 
 # Add KernelSU
+echo "adding ksu"
+cd ./kernel_platform
 curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+cd ./KernelSU/kernel
+sed -i 's/ccflags-y += -DKSU_VERSION=16/ccflags-y += -DKSU_VERSION=11989/' ./Makefile
+cd ../../
 
 #add susfs
 echo "adding susfs"
-cd ..
-cp ./susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./android14-5.15/KernelSU/
-cp ./susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-5.15.patch ./android14-5.15/common/
-cp ./susfs4ksu/kernel_patches/fs/susfs.c ./android14-5.15/common/fs/
-cp ./susfs4ksu/kernel_patches/include/linux/susfs.h ./android14-5.15/common/include/linux/
-cd ./android14-5.15/KernelSU/
-patch -p1 < 10_enable_susfs_for_ksu.patch
-cd ..
-cd ./common
-patch -p1 < 50_add_susfs_in_gki-android14-5.15.patch
-
-#adding lineage patch
-cd ../../
-cp ./lineage_kernel_patches/69_hide_lineage.patch ./android14-5.15
-cd ./android14-5.15
-patch -p1 < 69_hide_lineage.patch
+cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
+cp ../../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ./common/
+cp ../../susfs4ksu/kernel_patches/fs/susfs.c ./common/fs/
+cp ../../susfs4ksu/kernel_patches/include/linux/susfs.h ./common/include/linux/
+cp ../../susfs4ksu/kernel_patches/fs/sus_su.c ./common/fs/
+cp ../../susfs4ksu/kernel_patches/include/linux/sus_su.h ./common/include/linux/
+cd ./KernelSU/
+patch -p1 -F 3 < 10_enable_susfs_for_ksu.patch
+cd ../common
+patch -p1 -F 3 < 50_add_susfs_in_gki-android14-6.1.patch
 
 #build Kernel
-#cd ..
-sed -i "/stable_scmversion_cmd/s/-maybe-dirty/-Wild-Exclusive+/g" ./build/kernel/kleaf/impl/stamp.bzl
-sed -i '2s/check_defconfig//' ./common/build.config.gki
+cd ..
 echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/gki_defconfig
@@ -74,18 +66,22 @@ echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconf
 echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
-tools/bazel build --config=fast //common:kernel_aarch64_dist
+cd ..
+sed -i "/stable_scmversion_cmd/s/-maybe-dirty/-Wild+/g" ./kernel_platform/build/kernel/kleaf/impl/stamp.bzl
+sed -i "s/dirty/'Wild+'/g" ./kernel_platform/common/scripts/setlocalversion
+sed -i '2s/check_defconfig//' ./kernel_platform/common/build.config.gki
+./kernel_platform/oplus/build/oplus_build_kernel.sh kalama gki
 
 # Copy Image.lz4
-echo "Copying Image.lz4"
-cp ./bazel-bin/common/kernel_aarch64/Image.lz4 ../AnyKernel3/Image.lz4
+echo "Copying Image"
+cp ./out/dist/Image ../AnyKernel3/Image
 
 # Navigate to the AnyKernel3 directory
 echo "Navigating to AnyKernel3 directory..."
 cd ../AnyKernel3
 
 # Zip the files in the AnyKernel3 directory with a new naming convention
-ZIP_NAME="GKI-android14-5.15-KernelSU-SUSFS-$(date +'%Y-%m-%d-%H-%M-%S').zip"
+ZIP_NAME="Anykernel3-OP-A15-android14-6.1-KernelSU-SUSFS-$(date +'%Y-%m-%d-%H-%M-%S').zip"
 echo "Creating zip file $ZIP_NAME..."
 zip -r "../$ZIP_NAME" ./*
 
@@ -94,9 +90,9 @@ cd ..
 
 # GitHub Release using gh CLI
 REPO_OWNER="TheWildJames"         # Replace with your GitHub username
-REPO_NAME="android14-5.15"  # Replace with your repository name
+REPO_NAME="OnePlus_KernelSU_SUSFS"  # Replace with your repository name
 TAG_NAME="v$(date +'%Y.%m.%d-%H%M%S')"   # Unique tag with timestamp to ensure multiple releases on the same day
-RELEASE_NAME="GKI-android14-5.15 With KernelSU & SUSFS"  # Updated release name
+RELEASE_NAME="OP OPEN A15 KernelSU & SUSFS"  # Updated release name
 
 # Create the release using gh CLI (no need to include $ROOT_DIR)
 echo "Creating GitHub release for $RELEASE_NAME..."

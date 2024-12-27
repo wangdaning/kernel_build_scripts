@@ -4,7 +4,7 @@
 set -e
 
 #DO NOT GO OVER 4
-MAX_CONCURRENT_BUILDS=4
+MAX_CONCURRENT_BUILDS=1
 
 # Check if 'builds' folder exists, create it if not
 if [ ! -d "./builds" ]; then
@@ -24,46 +24,47 @@ cd "$ROOT_DIR"
 
 # Array with configurations (e.g., android-version-kernel-version-date)
 BUILD_CONFIGS=(
-    "android12-5.10-198-2024-01"
-    "android12-5.10-205-2024-03"
-    "android12-5.10-209-2024-05"
-    "android12-5.10-218-2024-08"
+    #"android12-5.10-198-2024-01"
+    #"android12-5.10-205-2024-03"
+    #"android12-5.10-209-2024-05"
+    #"android12-5.10-218-2024-08"
 
-    "android13-5.10-189-2023-11"
-    "android13-5.10-198-2024-01"
-    "android13-5.10-205-2024-03"
-    "android13-5.10-209-2024-05"
-    "android13-5.10-210-2024-06"
-    "android13-5.10-214-2024-07"
-    "android13-5.10-218-2024-08"
+    #"android13-5.10-189-2023-11"
+    #"android13-5.10-198-2024-01"
+    #"android13-5.10-205-2024-03"
+    #"android13-5.10-209-2024-05"
+    #"android13-5.10-210-2024-06"
+    #"android13-5.10-214-2024-07"
+    #"android13-5.10-218-2024-08"
 
-    "android13-5.15-94-2023-05"
+    #"android13-5.15-94-2023-05"
     "android13-5.15-123-2023-11"
-    "android13-5.15-137-2024-01"
-    "android13-5.15-144-2024-03"
-    "android13-5.15-148-2024-05"
-    "android13-5.15-149-2024-07"
-    "android13-5.15-151-2024-08"
-    "android13-5.15-167-2024-11"
+    #"android13-5.15-137-2024-01"
+    #"android13-5.15-144-2024-03"
+    #"android13-5.15-148-2024-05"
+    #"android13-5.15-149-2024-07"
+    #"android13-5.15-151-2024-08"
+    #"android13-5.15-167-2024-11"
+    #"android13-5.15-173-lts"
     
-    "android14-5.15-131-2023-11"
-    "android14-5.15-137-2024-01"
-    "android14-5.15-144-2024-03"
-    "android14-5.15-148-2024-05"
-    "android14-5.15-149-2024-06"
-    "android14-5.15-153-2024-07"
-    "android14-5.15-158-2024-08"
-    "android14-5.15-167-2024-11"
+    #"android14-5.15-131-2023-11"
+    #"android14-5.15-137-2024-01"
+    #"android14-5.15-144-2024-03"
+    #"android14-5.15-148-2024-05"
+    #"android14-5.15-149-2024-06"
+    #"android14-5.15-153-2024-07"
+    #"android14-5.15-158-2024-08"
+    #"android14-5.15-167-2024-11"
 
-    "android14-6.1-25-2023-10"
-    "android14-6.1-43-2023-11"
-    "android14-6.1-57-2024-01"
-    "android14-6.1-68-2024-03"
-    "android14-6.1-75-2024-05"
-    "android14-6.1-78-2024-06"
-    "android14-6.1-84-2024-07"
-    "android14-6.1-90-2024-08"
-    "android14-6.1-112-2024-11"
+    #"android14-6.1-25-2023-10"
+    #"android14-6.1-43-2023-11"
+    #"android14-6.1-57-2024-01"
+    #"android14-6.1-68-2024-03"
+    #"android14-6.1-75-2024-05"
+    #"android14-6.1-78-2024-06"
+    #"android14-6.1-84-2024-07"
+    #"android14-6.1-90-2024-08"
+    #"android14-6.1-112-2024-11"
     
     #"android15-6.6-30-2024-08"
 )
@@ -107,13 +108,13 @@ build_config() {
     echo "Cloning susfs4ksu repository..."
     git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "gki-${ANDROID_VERSION}-${KERNEL_VERSION}"
 
-    # Check if lineage_kernel_patches repo exists, remove it if it does
+    # Check if kernel_patches repo exists, remove it if it does
     if [ -d "./kernel_patches" ]; then
         echo "Removing existing kernel_patches directory..."
         rm -rf ./kernel_patches
     fi
-    echo "Cloning lineage_kernel_patches repository..."
-    git clone https://github.com/TheWildJames/_kernel_patches.git
+    echo "Cloning kernel_patches repository..."
+    git clone https://github.com/TheWildJames/kernel_patches.git
 
     # Setup directory for each build
     SOURCE_DIR="/home/james/android_kernels/$CONFIG"
@@ -148,26 +149,54 @@ build_config() {
 
     # Apply KernelSU and SUSFS patches
     echo "Adding KernelSU..."
-    curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
+    curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU/next/kernel/setup.sh" | bash -s next
+    #curl -LSs "https://raw.githubusercontent.com/backslashxx/KernelSU/magic/kernel/setup.sh" | bash -
+    #curl -LSs "https://raw.githubusercontent.com/5ec1cff/KernelSU/main/kernel/setup.sh" | bash -
 
     echo "Applying SUSFS patches..."
-    cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
+    cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU-Next/
     cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
     cp ../susfs4ksu/kernel_patches/fs/susfs.c ./common/fs/
     cp ../susfs4ksu/kernel_patches/include/linux/susfs.h ./common/include/linux/
-    cp ../susfs4ksu/kernel_patches/fs/sus_su.c ./common/fs/
-    cp ../susfs4ksu/kernel_patches/include/linux/sus_su.h ./common/include/linux/
 
     # Apply the patches
-    cd ./KernelSU
-    patch -p1 < 10_enable_susfs_for_ksu.patch
+    cd ./KernelSU-Next
+    if [ "${ANDROID_VERSION}" = "android14" ] && [ "${KERNEL_VERSION}" = "5.15" ]; then
+        sed -i 's/KSU_EXPECTED_MAGIC_HASH := 7e0c6d7278a3bb8e364e0fcba95afaf3666cf5ff3c245a3b63c8833bd0445cc4/KSU_EXPECTED_MAGIC_HASH := 79e590113c4c4c0c222978e413a5faa801666957b1212a328e46c00c69821bf7/' ./10_enable_susfs_for_ksu.patch
+        sed -i 's/KSU_EXPECTED_MAGIC_SIZE := 384/KSU_EXPECTED_MAGIC_SIZE := 998/' ./10_enable_susfs_for_ksu.patch
+    fi
+    patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
     cd ../common
-    patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch
+    patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
 
     #adding lineage patch
     cp ../../kernel_patches/69_hide_stuff.patch ./
     patch -p1 -F 3 < 69_hide_stuff.patch
+    cp ../../kernel_patches/ksu_hooks.patch ./
+    patch -p1 -F 3 < ksu_hooks.patch
+
     cd ..
+    if [ "${ANDROID_VERSION}" = "android14" ] && [ "${KERNEL_VERSION}" = "6.1" ]; then
+        echo "Skipping selinux.c patch fix"
+    else
+        cp ../kernel_patches/selinux.c_fix.patch ./
+        patch -p1 -F 3 < selinux.c_fix.patch
+    fi
+    if [ "${ANDROID_VERSION}" = "android14" ] && [ "${KERNEL_VERSION}" = "5.15" ]; then
+        echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/zuma_defconfig
+        cp ../kernel_patches/apk_sign.c_fix.patch ./
+        patch -p1 -F 3 < apk_sign.c_fix.patch
+    else
+        echo "Skipping KSU_SUSFS_HAS_MAGIC_MOUNT=y"
+        echo "Skipping apk_sign.c_fix.patch"
+    fi
+    cp ../kernel_patches/kernel_compat.c_fix.patch ./
+    patch -p1 --fuzz=3 < ./kernel_compat.c_fix.patch
+
+    sed -i 's/#ifdef CONFIG_KPROBES/#if 0/g' ./KernelSU-Next/kernel/core_hook.c
+    sed -i 's/#ifdef CONFIG_KPROBES/#if 0/g' ./KernelSU-Next/kernel/ksu.c
+    sed -i 's/#ifdef CONFIG_KPROBES/#if 0/g' ./KernelSU-Next/kernel/ksud.c
+    sed -i 's/#ifdef CONFIG_KPROBES/#if 0/g' ./KernelSU-Next/kernel/sucompat.c
 
     # Add configuration settings for SUSFS
     echo "Adding configuration settings to gki_defconfig..."
@@ -175,13 +204,18 @@ build_config() {
     echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+    echo "KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
+    echo "KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+    echo "KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
+    echo "KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> ./common/arch/arm64/configs/gki_defconfig
+    echo "KSU_SUSFS_SPOOF_BOOTCONFIG=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
+    echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
 
     # Build kernel
     echo "Building kernel for $CONFIG..."
@@ -334,7 +368,7 @@ build_config() {
 
     # Delete the $CONFIG folder after building
     echo "Deleting $CONFIG folder..."
-    rm -rf "$CONFIG"
+    #rm -rf "$CONFIG"
 }
 
 # Concurrent build management
@@ -352,6 +386,8 @@ wait
 
 echo "Build process complete."
 
+exit
+
 # Collect all zip and img files
 FILES=($(find ./ -type f \( -name "*.zip" -o -name "*.img" \)))
 
@@ -361,17 +397,25 @@ REPO_NAME="GKI_KernelSU_SUSFS"
 TAG_NAME="v$(date +'%Y.%m.%d-%H%M%S')"
 RELEASE_NAME="GKI Kernels With KernelSU & SUSFS v1.5.3"
 RELEASE_NOTES="This release contains KernelSU and SUSFS v1.5.3
-
 Note: 6.1 Kernels are still on 1.5.2
 
-Module: https://github.com/sidex15/ksu_module_susfs
+Module: 
+https://github.com/sidex15/ksu_module_susfs
+Note: Use 1.5.2 until 1.5.3
+Note: 6.1 Kernels use r10 for best compatibility
+
+Manager: 
+https://github.com/rifsxd/KernelSU-Next
+https://github.com/rsuntk/KernelSU
 
 Features:
-[+] KernelSU
+[+] KernelSU-Next
 [+] SUSFS v1.5.3
-[+] Maphide Lineage Detections
+[+] Built-in sus_su mode 2 (Will say disabled in module)
+[+] Wireguard Support
+[+] Maphide LineageOS Detections
 [+] Futile Maphide for jit-zygote-cache Detections
-[+] Wireguard Support 
+[+] Magic Mount (Must delete /data/adb/ksu/modules.img and /data/adb/modules) 
 "
 
 # Create the GitHub release

@@ -22,14 +22,27 @@ cd "$ROOT_DIR"
 
 # Clone the repositories into the root folder
 echo "Cloning repositories..."
-git clone https://github.com/TheWildJames/android_kernel_samsung_exynos9820.git
-git clone https://github.com/TheWildJames/AnyKernel3.git -b android12-5.10
+git clone https://github.com/TheWildJames/AnyKernel3.git -b android-4.14
 git clone https://gitlab.com/simonpunk/susfs4ksu.git -b kernel-4.14
+
+mkdir android-4.14-stable
+cd ./android-4.14-stable
 
 # Get the kernel
 echo "Get the kernel..."
-cd ./android_kernel_samsung_exynos9820
-rm -rf ./KernelSU
+echo "Initializing and syncing kernel source..."
+repo init --depth=1 --u https://android.googlesource.com/kernel/manifest -b common-android-4.14-stable
+REMOTE_BRANCH=$(git ls-remote https://android.googlesource.com/kernel/common android-4.14-stable)
+DEFAULT_MANIFEST_PATH=.repo/manifests/default.xml
+
+# Check if the branch is deprecated and adjust the manifest
+if grep -q deprecated <<< $REMOTE_BRANCH; then
+  echo "Found deprecated branch: android-4.14-stable"
+  sed -i "s/\"android-4.14-stable\"/\"deprecated\/android-4.14-stable\"/g" $DEFAULT_MANIFEST_PATH
+fi
+
+repo --version
+repo --trace sync -c -j$(nproc --all) --no-tags --fail-fast
 
 # Add KernelSU
 curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -s v0.9.5
@@ -47,176 +60,22 @@ patch -p1 -F 3 < 50_add_susfs_in_kernel-4.14.patch
 
 #add KSU Config
 echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_beyond0lte_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_beyond0lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_beyond0lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_beyond0lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_beyond0lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_beyond0lte_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_beyond0lte_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_beyond0lte_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_beyond0lte_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_beyond0lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_beyond0lte_defconfig
+echo "CONFIG_KSU=y" >> ./arch/arm64/configs/defconfig
+echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/defconfig
+echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/defconfig
+echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/defconfig
+echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/defconfig
+echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/defconfig
+echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/defconfig
+echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/defconfig
+echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/defconfig
+echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/defconfig
+echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/defconfig
 
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_beyond0lteks_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_beyond0lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_beyond0lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_beyond0lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_beyond0lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_beyond0lteks_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_beyond0lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_beyond0lteks_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_beyond0lteks_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_beyond0lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_beyond0lteks_defconfig
-
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_beyond1lte_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_beyond1lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_beyond1lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_beyond1lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_beyond1lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_beyond1lte_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_beyond1lte_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_beyond1lte_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_beyond1lte_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_beyond1lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_beyond1lte_defconfig
-
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_beyond1lteks_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_beyond1lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_beyond1lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_beyond1lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_beyond1lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_beyond1lteks_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_beyond1lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_beyond1lteks_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_beyond1lteks_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_beyond1lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_beyond1lteks_defconfig
-
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_beyond2lte_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_beyond2lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_beyond2lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_beyond2lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_beyond2lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_beyond2lte_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_beyond2lte_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_beyond2lte_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_beyond2lte_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_beyond2lte_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_beyond2lte_defconfig
-
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_beyond2lteks_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_beyond2lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_beyond2lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_beyond2lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_beyond2lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_beyond2lteks_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_beyond2lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_beyond2lteks_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_beyond2lteks_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_beyond2lteks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_beyond2lteks_defconfig
-
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_beyondx_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_beyondx_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_beyondx_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_beyondx_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_beyondx_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_beyondx_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_beyondx_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_beyondx_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_beyondx_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_beyondx_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_beyondx_defconfig
-
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_beyondxks_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_beyondxks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_beyondxks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_beyondxks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_beyondxks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_beyondxks_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_beyondxks_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_beyondxks_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_beyondxks_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_beyondxks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_beyondxks_defconfig
-
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_d1_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_d1_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_d1_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_d1_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_d1_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_d1_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_d1_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_d1_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_d1_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_d1_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_d1_defconfig
-
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_d1xks_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_d1xks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_d1xks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_d1xks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_d1xks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_d1xks_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_d1xks_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_d1xks_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_d1xks_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_d1xks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_d1xks_defconfig
-
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_d2s_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_d2s_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_d2s_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_d2s_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_d2s_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_d2s_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_d2s_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_d2s_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_d2s_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_d2s_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_d2s_defconfig
-
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_d2x_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_d2x_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_d2x_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_d2x_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_d2x_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_d2x_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_d2x_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_d2x_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_d2x_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_d2x_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_d2x_defconfig
-
-echo "Adding CONFIG_KSU.."
-echo "CONFIG_KSU=y" >> ./arch/arm64/configs/extreme_d2xks_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./arch/arm64/configs/extreme_d2xks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./arch/arm64/configs/extreme_d2xks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./arch/arm64/configs/extreme_d2xks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./arch/arm64/configs/extreme_d2xks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./arch/arm64/configs/extreme_d2xks_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./arch/arm64/configs/extreme_d2xks_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./arch/arm64/configs/extreme_d2xks_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./arch/arm64/configs/extreme_d2xks_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./arch/arm64/configs/extreme_d2xks_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./arch/arm64/configs/extreme_d2xks_defconfig
 #build Kernel
 echo "Building Kernel.."
-./build.sh -m d1
+make ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- defconfig -j$(nproc)
+LTO=thin ARCH=arm64 CROSS_COMPILE=aarch64-none-linux-gnu- BUILD_CONFIG=common/build.config.aarch64 build/build.sh
 
 exit
 

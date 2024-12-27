@@ -4,7 +4,7 @@
 set -e
 
 #DO NOT GO OVER 4
-MAX_CONCURRENT_BUILDS=4
+MAX_CONCURRENT_BUILDS=1
 
 # Check if 'builds' folder exists, create it if not
 if [ ! -d "./builds" ]; then
@@ -55,15 +55,15 @@ BUILD_CONFIGS=(
     "android14-5.15-158-2024-08"
     "android14-5.15-167-2024-11"
 
-    "android14-6.1-25-2023-10"
-    "android14-6.1-43-2023-11"
-    "android14-6.1-57-2024-01"
-    "android14-6.1-68-2024-03"
-    "android14-6.1-75-2024-05"
-    "android14-6.1-78-2024-06"
-    "android14-6.1-84-2024-07"
-    "android14-6.1-90-2024-08"
-    "android14-6.1-112-2024-11"
+    #"android14-6.1-25-2023-10"
+    #"android14-6.1-43-2023-11"
+    #"android14-6.1-57-2024-01"
+    #"android14-6.1-68-2024-03"
+    #"android14-6.1-75-2024-05"
+    #"android14-6.1-78-2024-06"
+    #"android14-6.1-84-2024-07"
+    #"android14-6.1-90-2024-08"
+    #"android14-6.1-112-2024-11"
     
     #"android15-6.6-30-2024-08"
 )
@@ -105,15 +105,15 @@ build_config() {
         rm -rf ./susfs4ksu
     fi
     echo "Cloning susfs4ksu repository..."
-    git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "gki-${ANDROID_VERSION}-${KERNEL_VERSION}"
+    git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "1.4.2-gki-${ANDROID_VERSION}-${KERNEL_VERSION}"
 
-    # Check if lineage_kernel_patches repo exists, remove it if it does
+    # Check if kernel_patches repo exists, remove it if it does
     if [ -d "./kernel_patches" ]; then
         echo "Removing existing kernel_patches directory..."
         rm -rf ./kernel_patches
     fi
-    echo "Cloning lineage_kernel_patches repository..."
-    git clone https://github.com/TheWildJames/_kernel_patches.git
+    echo "Cloning kernel_patches repository..."
+    git clone https://github.com/TheWildJames/kernel_patches.git
 
     # Setup directory for each build
     SOURCE_DIR="/home/james/android_kernels/$CONFIG"
@@ -153,6 +153,7 @@ build_config() {
     echo "Applying SUSFS patches..."
     cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
     cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
+    cp ../susfs4ksu/kernel_patches/KernelSU/kernel/sucompat.h ./KernelSU/kernel/
     cp ../susfs4ksu/kernel_patches/fs/susfs.c ./common/fs/
     cp ../susfs4ksu/kernel_patches/include/linux/susfs.h ./common/include/linux/
     cp ../susfs4ksu/kernel_patches/fs/sus_su.c ./common/fs/
@@ -359,16 +360,17 @@ FILES=($(find ./ -type f \( -name "*.zip" -o -name "*.img" \)))
 REPO_OWNER="TheWildJames"
 REPO_NAME="GKI_KernelSU_SUSFS"
 TAG_NAME="v$(date +'%Y.%m.%d-%H%M%S')"
-RELEASE_NAME="GKI Kernels With KernelSU & SUSFS v1.5.3"
-RELEASE_NOTES="This release contains KernelSU and SUSFS v1.5.3
+RELEASE_NAME="GKI Kernels With KernelSU & SUSFS v1.4.2"
+RELEASE_NOTES="This release contains KernelSU and SUSFS v1.4.2
 
-Note: 6.1 Kernels are still on 1.5.2
+Note: This release is for users crashing on > 1.4.2!
+Note: 6.1 does not have 1.4.2!
 
 Module: https://github.com/sidex15/ksu_module_susfs
 
 Features:
 [+] KernelSU
-[+] SUSFS v1.5.3
+[+] SUSFS v1.4.2
 [+] Maphide Lineage Detections
 [+] Futile Maphide for jit-zygote-cache Detections
 [+] Wireguard Support 
