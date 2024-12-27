@@ -22,6 +22,7 @@ cd "$ROOT_DIR"
 echo "Cloning repositories..."
 git clone https://github.com/TheWildJames/AnyKernel3.git -b android14-5.15
 git clone https://gitlab.com/simonpunk/susfs4ksu.git -b gki-android14-6.1
+git clone https://github.com/TheWildJames/kernel_patches.git
 
 # Get the kernel
 echo "Get the kernel..."
@@ -35,40 +36,37 @@ rm -rf ./kernel_platform/common/android/abi_gki_protected_exports_*
 # Add KernelSU
 echo "adding ksu"
 cd ./kernel_platform
-curl -LSs "https://raw.githubusercontent.com/tiann/KernelSU/main/kernel/setup.sh" | bash -
-cd ./KernelSU/kernel
-sed -i 's/ccflags-y += -DKSU_VERSION=16/ccflags-y += -DKSU_VERSION=11989/' ./Makefile
+curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU/next/kernel/setup.sh" | bash -s next
+cd ./KernelSU-Next/kernel
+sed -i 's/ccflags-y += -DKSU_VERSION=16/ccflags-y += -DKSU_VERSION=12113/' ./Makefile
 cd ../../
 
 #add susfs
 echo "adding susfs"
-cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU/
+cp ../../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU-Next/
 cp ../../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ./common/
 cp ../../susfs4ksu/kernel_patches/fs/susfs.c ./common/fs/
 cp ../../susfs4ksu/kernel_patches/include/linux/susfs.h ./common/include/linux/
-cp ../../susfs4ksu/kernel_patches/fs/sus_su.c ./common/fs/
-cp ../../susfs4ksu/kernel_patches/include/linux/sus_su.h ./common/include/linux/
-cd ./KernelSU/
+cd ./KernelSU-Next/
 patch -p1 < 10_enable_susfs_for_ksu.patch
 cd ../common
 patch -p1 < 50_add_susfs_in_gki-android14-6.1.patch
+cp ../../kernel_patches/69_hide_stuff.patch ./
+patch -p1 -F 3 < 69_hide_stuff.patch
+sed -i '/obj-\$(CONFIG_KSU_SUSFS_SUS_SU) += sus_su.o/d' ./fs/Makefile
+cd ..
+cp ../kernel_patches/selinux.c_fix.patch ./
+patch -p1 -F 3 < selinux.c_fix.patch
+cp ../kernel_patches/apk_sign.c_fix.patch ./
+patch -p1 -F 3 < apk_sign.c_fix.patch
+cp ../kernel_patches/Makefile_fix.patch ./
+patch -p1 --fuzz=3 < ./Makefile_fix.patch
 
 #build Kernel
-cd ..
 echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/gki_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./common/arch/arm64/configs/gki_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
-echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconfig
-echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
-echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
 echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
 cd ..
-sed -i "/stable_scmversion_cmd/s/-maybe-dirty/-Wild+/g" ./kernel_platform/build/kernel/kleaf/impl/stamp.bzl
-sed -i "s/dirty/'Wild+'/g" ./kernel_platform/common/scripts/setlocalversion
 sed -i '2s/check_defconfig//' ./kernel_platform/common/build.config.gki
 ./kernel_platform/oplus/build/oplus_build_kernel.sh pineapple gki
 
