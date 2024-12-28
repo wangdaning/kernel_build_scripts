@@ -22,7 +22,6 @@ echo "Creating root folder: $ROOT_DIR..."
 mkdir -p "$ROOT_DIR"
 cd "$ROOT_DIR"
 
-# Array with configurations (e.g., android-version-kernel-version-date)
 BUILD_CONFIGS=(
     #"android12-5.10-198-2024-01"
     #"android12-5.10-205-2024-03"
@@ -40,7 +39,7 @@ BUILD_CONFIGS=(
     #"android13-5.10-X-lts"
 
     #"android13-5.15-94-2023-05"
-    "android13-5.15-123-2023-11"
+    #"android13-5.15-123-2023-11"
     #"android13-5.15-137-2024-01"
     #"android13-5.15-144-2024-03"
     #"android13-5.15-148-2024-05"
@@ -98,9 +97,9 @@ build_config() {
 
     echo "Starting build for $CONFIG using branch $FORMATTED_BRANCH..."
     echo "Cloning AnyKernel3 repository..."
-    git clone https://github.com/TheWildJames/AnyKernel3.git -b "${ANDROID_VERSION}-${KERNEL_VERSION}"
+    git clone https://github.com/TheWildJames/AnyKernel3.git -b "android14-6.1"
     echo "Cloning susfs4ksu repository..."
-    git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "gki-${ANDROID_VERSION}-${KERNEL_VERSION}"
+    git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "gki-android14-6.1"
     echo "Cloning kernel_patches repository..."
     git clone https://github.com/TheWildJames/kernel_patches.git
 
@@ -141,7 +140,7 @@ build_config() {
     
     echo "Applying SUSFS patches..."
     cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU-Next/
-    cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
+    cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-android14-6.1.patch ./common/
     cp ../susfs4ksu/kernel_patches/fs/susfs.c ./common/fs/
     cp ../susfs4ksu/kernel_patches/include/linux/susfs.h ./common/include/linux/
 
@@ -149,7 +148,7 @@ build_config() {
     cd ./KernelSU-Next
     patch -p1 --forward < 10_enable_susfs_for_ksu.patch || true
     cd ../common
-    patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
+    patch -p1 < 50_add_susfs_in_gki-android14-6.1.patch || true
     cp ../../kernel_patches/69_hide_stuff.patch ./
     patch -p1 -F 3 < 69_hide_stuff.patch
     sed -i '/obj-\$(CONFIG_KSU_SUSFS_SUS_SU) += sus_su.o/d' ./fs/Makefile
@@ -167,7 +166,7 @@ build_config() {
     echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
-    #echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+    echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
@@ -270,7 +269,7 @@ build_config() {
 
         # Creating Boot imgs
         echo "Creating boot.imgs..."
-        if [ "$ANDROID_VERSION" = "android14" ]; then
+        if [ "$ANDROID_VERSION" = "android14" ] || [ "$ANDROID_VERSION" = "android15" ]; then
             mkdir bootimgs
             cp ./bazel-bin/common/kernel_aarch64/Image ./bootimgs
             cp ./bazel-bin/common/kernel_aarch64/Image.lz4 ./bootimgs
