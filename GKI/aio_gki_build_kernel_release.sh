@@ -38,8 +38,8 @@ BUILD_CONFIGS=(
     #"android13-5.10-218-2024-08"
     #"android13-5.10-X-lts"
 
-    "android13-5.15-94-2023-05"
-    "android13-5.15-123-2023-11"
+    #"android13-5.15-94-2023-05"
+    #"android13-5.15-123-2023-11"
     #"android13-5.15-137-2024-01"
     #"android13-5.15-144-2024-03"
     #"android13-5.15-148-2024-05"
@@ -55,7 +55,7 @@ BUILD_CONFIGS=(
     #"android14-5.15-149-2024-06"
     #"android14-5.15-153-2024-07"
     #"android14-5.15-158-2024-08"
-    #"android14-5.15-167-2024-11"
+    "android14-5.15-167-2024-11"
     #"android14-5.15-X-lts"
 
     #"android14-6.1-25-2023-10"
@@ -151,25 +151,26 @@ build_config() {
     patch -p1 < 50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch || true
     cp ../../kernel_patches/69_hide_stuff.patch ./
     patch -p1 -F 3 < 69_hide_stuff.patch
-    sed -i '/obj-\$(CONFIG_KSU_SUSFS_SUS_SU) += sus_su.o/d' ./fs/Makefile
     cd ..
-    cp ../kernel_patches/selinux.c_fix.patch ./
-    patch -p1 -F 3 < selinux.c_fix.patch
+    
     cp ../kernel_patches/apk_sign.c_fix.patch ./
     patch -p1 -F 3 < apk_sign.c_fix.patch
-    cp ../kernel_patches/Makefile_fix.patch ./
-    patch -p1 --fuzz=3 < ./Makefile_fix.patch
+    
+    cp ../kernel_patches/core_hook.c_fix.patch ./
+    patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
 
+    cp ../kernel_patches/selinux.c_fix.patch ./
+    patch -p1 -F 3 < selinux.c_fix.patch
     
     # Add configuration settings for SUSFS
     echo "Adding configuration settings to gki_defconfig..."
     echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_SUS_SU=n" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
+    echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
+    echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+    #echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
+    #echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
+    #echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
 
     # Build kernel
     echo "Building kernel for $CONFIG..."

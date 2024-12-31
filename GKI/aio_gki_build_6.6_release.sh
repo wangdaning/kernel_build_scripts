@@ -70,7 +70,7 @@ BUILD_CONFIGS=(
     #"android14-6.1-115-2024-12"
     #"android14-6.1-X-lts"
     
-    #"android15-6.6-30-2024-08"
+    "android15-6.6-30-2024-08"
 )
 
 # Arrays to store generated zip files, grouped by androidversion-kernelversion
