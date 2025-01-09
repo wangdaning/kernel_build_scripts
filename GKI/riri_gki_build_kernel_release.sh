@@ -23,54 +23,7 @@ mkdir -p "$ROOT_DIR"
 cd "$ROOT_DIR"
 
 BUILD_CONFIGS=(
-    "android12-5.10-198-2024-01"
-    "android12-5.10-205-2024-03"
-    "android12-5.10-209-2024-05"
-    "android12-5.10-218-2024-08"
-    "android12-5.10-X-lts"
-
-    "android13-5.10-189-2023-11"
-    "android13-5.10-198-2024-01"
-    "android13-5.10-205-2024-03"
-    "android13-5.10-209-2024-05"
-    "android13-5.10-210-2024-06"
-    "android13-5.10-214-2024-07"
-    "android13-5.10-218-2024-08"
-    "android13-5.10-X-lts"
-
-    "android13-5.15-94-2023-05"
     "android13-5.15-123-2023-11"
-    "android13-5.15-137-2024-01"
-    "android13-5.15-144-2024-03"
-    "android13-5.15-148-2024-05"
-    "android13-5.15-149-2024-07"
-    "android13-5.15-151-2024-08"
-    "android13-5.15-167-2024-11"
-    "android13-5.15-X-lts"
-    
-    "android14-5.15-131-2023-11"
-    "android14-5.15-137-2024-01"
-    "android14-5.15-144-2024-03"
-    "android14-5.15-148-2024-05"
-    "android14-5.15-149-2024-06"
-    "android14-5.15-153-2024-07"
-    "android14-5.15-158-2024-08"
-    "android14-5.15-167-2024-11"
-    "android14-5.15-X-lts"
-
-    "android14-6.1-25-2023-10"
-    "android14-6.1-43-2023-11"
-    "android14-6.1-57-2024-01"
-    "android14-6.1-68-2024-03"
-    "android14-6.1-75-2024-05"
-    "android14-6.1-78-2024-06"
-    "android14-6.1-84-2024-07"
-    "android14-6.1-90-2024-08"
-    "android14-6.1-112-2024-11"
-    "android14-6.1-115-2024-12"
-    "android14-6.1-X-lts"
-    
-    #"android15-6.6-30-2024-08"
 )
 
 # Arrays to store generated zip files, grouped by androidversion-kernelversion
@@ -228,17 +181,17 @@ build_config() {
                 
                 echo 'Building boot.img'
                 mkbootimg.py --header_version 4 --kernel Image --output boot.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${DATE}"
-                avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+                avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
                 cp ./boot.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot.img
                 
                 echo 'Building boot-gz.img'
                 mkbootimg.py --header_version 4 --kernel Image.gz --output boot-gz.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${DATE}"
-            	avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+            	avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
                 cp ./boot-gz.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot-gz.img
 
                 echo 'Building boot-lz4.img'
                 mkbootimg.py --header_version 4 --kernel Image.lz4 --output boot-lz4.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${DATE}"
-                avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-lz4.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+                avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-lz4.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
                 cp ./boot-lz4.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot-lz4.img
                 cd ..
 
@@ -256,17 +209,17 @@ build_config() {
 
             echo 'Building boot.img'
             mkbootimg.py --header_version 4 --kernel Image --output boot.img
-            avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+            avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
             cp ./boot.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot.img
             
             echo 'Building boot-gz.img'
             mkbootimg.py --header_version 4 --kernel Image.gz --output boot-gz.img
-        	avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+        	avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
             cp ./boot-gz.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot-gz.img
 
             echo 'Building boot-lz4.img'
             mkbootimg.py --header_version 4 --kernel Image.lz4 --output boot-lz4.img
-            avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-lz4.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+            avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-lz4.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
             cp ./boot-lz4.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot-lz4.img
             cd ..
         fi
@@ -277,7 +230,7 @@ build_config() {
         sed -i '2s/check_defconfig//' ./common/build.config.gki
         rm -rf ./common/android/abi_gki_protected_exports_aarch64
         rm -rf ./common/android/abi_gki_protected_exports_x86_64
-        tools/bazel build --lto=full --stamp //common:kernel_aarch64_dist
+        tools/bazel build --lto=full //common:kernel_aarch64_dist
         
 
         # Creating Boot imgs
@@ -380,7 +333,7 @@ NEW_TAG=$(echo "$LATEST_TAG" | awk -F- '{suffix=$2; if (!suffix) suffix=0; suffi
 TAG_NAME="$NEW_TAG"
 
 #TAG_NAME="v1.5.3-$(date +'%Y.%m.%d-%H.%M.%S')"
-RELEASE_NAME="*TEST BUILD* GKI Kernels With KernelSU & SUSFS v1.5.3 *TEST BUILD*"
+RELEASE_NAME="*RIRI BUILD* GKI Kernels With KernelSU & SUSFS v1.5.3 *RIRI BUILD*"
 RELEASE_NOTES="This release contains KernelSU and SUSFS v1.5.3
 
 Module: https://github.com/sidex15/ksu_module_susfs
@@ -401,8 +354,12 @@ Features:
 [+] Wireguard Support
 [+] Maphide LineageOS Detections
 [+] Futile Maphide for jit-zygote-cache Detections
-[+] Magic Mount Support
+[+] NO MAGIC MOUNT SUPPORT
 [+] Built With LTO=Full, Optimizations For Improved Performance And Efficiency
+[+] CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=n
+[+] CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=n
+[+] CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=n
+[+] CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=n
 "
 
 # Create the GitHub release

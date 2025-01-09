@@ -23,52 +23,52 @@ mkdir -p "$ROOT_DIR"
 cd "$ROOT_DIR"
 
 BUILD_CONFIGS=(
-    "android12-5.10-198-2024-01"
-    "android12-5.10-205-2024-03"
-    "android12-5.10-209-2024-05"
-    "android12-5.10-218-2024-08"
-    "android12-5.10-X-lts"
+    #"android12-5.10-198-2024-01"
+    #"android12-5.10-205-2024-03"
+    #"android12-5.10-209-2024-05"
+    #"android12-5.10-218-2024-08"
+    #"android12-5.10-X-lts"
 
-    "android13-5.10-189-2023-11"
-    "android13-5.10-198-2024-01"
-    "android13-5.10-205-2024-03"
-    "android13-5.10-209-2024-05"
-    "android13-5.10-210-2024-06"
-    "android13-5.10-214-2024-07"
-    "android13-5.10-218-2024-08"
-    "android13-5.10-X-lts"
+    #"android13-5.10-189-2023-11"
+    #"android13-5.10-198-2024-01"
+    #"android13-5.10-205-2024-03"
+    #"android13-5.10-209-2024-05"
+    #"android13-5.10-210-2024-06"
+    #"android13-5.10-214-2024-07"
+    #"android13-5.10-218-2024-08"
+    #"android13-5.10-X-lts"
 
-    "android13-5.15-94-2023-05"
+    #"android13-5.15-94-2023-05"
     "android13-5.15-123-2023-11"
-    "android13-5.15-137-2024-01"
-    "android13-5.15-144-2024-03"
-    "android13-5.15-148-2024-05"
-    "android13-5.15-149-2024-07"
-    "android13-5.15-151-2024-08"
-    "android13-5.15-167-2024-11"
-    "android13-5.15-X-lts"
+    #"android13-5.15-137-2024-01"
+    #"android13-5.15-144-2024-03"
+    #"android13-5.15-148-2024-05"
+    #"android13-5.15-149-2024-07"
+    #"android13-5.15-151-2024-08"
+    #"android13-5.15-167-2024-11"
+    #"android13-5.15-X-lts"
     
-    "android14-5.15-131-2023-11"
-    "android14-5.15-137-2024-01"
-    "android14-5.15-144-2024-03"
-    "android14-5.15-148-2024-05"
-    "android14-5.15-149-2024-06"
-    "android14-5.15-153-2024-07"
-    "android14-5.15-158-2024-08"
-    "android14-5.15-167-2024-11"
-    "android14-5.15-X-lts"
+    #"android14-5.15-131-2023-11"
+    #"android14-5.15-137-2024-01"
+    #"android14-5.15-144-2024-03"
+    #"android14-5.15-148-2024-05"
+    #"android14-5.15-149-2024-06"
+    #"android14-5.15-153-2024-07"
+    #"android14-5.15-158-2024-08"
+    #"android14-5.15-167-2024-11"
+    #"android14-5.15-X-lts"
 
-    "android14-6.1-25-2023-10"
-    "android14-6.1-43-2023-11"
-    "android14-6.1-57-2024-01"
-    "android14-6.1-68-2024-03"
-    "android14-6.1-75-2024-05"
-    "android14-6.1-78-2024-06"
-    "android14-6.1-84-2024-07"
-    "android14-6.1-90-2024-08"
-    "android14-6.1-112-2024-11"
-    "android14-6.1-115-2024-12"
-    "android14-6.1-X-lts"
+    #"android14-6.1-25-2023-10"
+    #"android14-6.1-43-2023-11"
+    #"android14-6.1-57-2024-01"
+    #"android14-6.1-68-2024-03"
+    #"android14-6.1-75-2024-05"
+    #"android14-6.1-78-2024-06"
+    #"android14-6.1-84-2024-07"
+    #"android14-6.1-90-2024-08"
+    #"android14-6.1-112-2024-11"
+    #"android14-6.1-115-2024-12"
+    #"android14-6.1-X-lts"
     
     #"android15-6.6-30-2024-08"
 )
@@ -99,7 +99,7 @@ build_config() {
     echo "Cloning AnyKernel3 repository..."
     git clone https://github.com/TheWildJames/AnyKernel3.git -b "${ANDROID_VERSION}-${KERNEL_VERSION}"
     echo "Cloning susfs4ksu repository..."
-    git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "gki-${ANDROID_VERSION}-${KERNEL_VERSION}"
+    git clone https://gitlab.com/simonpunk/susfs4ksu.git -b "1.4.2-gki-${ANDROID_VERSION}-${KERNEL_VERSION}"
     echo "Cloning kernel_patches repository..."
     git clone https://github.com/TheWildJames/kernel_patches.git
 
@@ -136,15 +136,14 @@ build_config() {
 
     # Apply KernelSU and SUSFS patches
     echo "Adding KernelSU..."
-    curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU-Next/next/kernel/setup.sh" | bash -
-    cd ./KernelSU-Next/kernel
-    sed -i 's/ccflags-y += -DKSU_VERSION=16/ccflags-y += -DKSU_VERSION=12000/' ./Makefile
-    cd ../../
+    curl -LSs "https://raw.githubusercontent.com/rifsxd/KernelSU/next/kernel/setup.sh" | bash -s next
+    
     echo "Applying SUSFS patches..."
     cp ../susfs4ksu/kernel_patches/KernelSU/10_enable_susfs_for_ksu.patch ./KernelSU-Next/
     cp ../susfs4ksu/kernel_patches/50_add_susfs_in_gki-${ANDROID_VERSION}-${KERNEL_VERSION}.patch ./common/
     cp ../susfs4ksu/kernel_patches/fs/* ./common/fs/
     cp ../susfs4ksu/kernel_patches/include/linux/* ./common/include/linux/
+    cp ../susfs4ksu/kernel_patches/KernelSU/kernel/* ./KernelSU-Next/kernel/
 
     # Apply the patches
     cd ./KernelSU-Next
@@ -154,35 +153,26 @@ build_config() {
     cp ../../kernel_patches/69_hide_stuff.patch ./
     patch -p1 -F 3 < 69_hide_stuff.patch
     cd ..
-    
-    cp ../kernel_patches/apk_sign.c_fix.patch ./
-    patch -p1 -F 3 < apk_sign.c_fix.patch
-    
-    cp ../kernel_patches/core_hook.c_fix.patch ./
-    patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
 
-    cp ../kernel_patches/selinux.c_fix.patch ./
-    patch -p1 -F 3 < selinux.c_fix.patch
+    #cp ../kernel_patches/apk_sign.c_fix.patch ./
+    #patch -p1 -F 3 < apk_sign.c_fix.patch
+    
+    #cp ../kernel_patches/core_hook.c_fix.patch ./
+    #patch -p1 --fuzz=3 < ./core_hook.c_fix.patch
+
+    #cp ../kernel_patches/selinux.c_fix.patch ./
+    #patch -p1 -F 3 < selinux.c_fix.patch
     
     # Add configuration settings for SUSFS
     echo "Adding configuration settings to gki_defconfig..."
     echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_SUS_PATH=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_SUS_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_SUS_KSTAT=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_TRY_UMOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_SPOOF_UNAME=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_ENABLE_LOG=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_HIDE_KSU_SUSFS_SYMBOLS=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_SPOOF_CMDLINE_OR_BOOTCONFIG=y" >> ./common/arch/arm64/configs/gki_defconfig
-    echo "CONFIG_KSU_SUSFS_OPEN_REDIRECT=y" >> ./common/arch/arm64/configs/gki_defconfig
     echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/gki_defconfig
+    #echo "CONFIG_KSU_SUSFS_HAS_MAGIC_MOUNT=y" >> ./common/arch/arm64/configs/gki_defconfig
+    #echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_KSU_DEFAULT_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
+    #echo "CONFIG_KSU_SUSFS_AUTO_ADD_SUS_BIND_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
+    #echo "CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT=n" >> ./common/arch/arm64/configs/gki_defconfig
+    #echo "CONFIG_KSU_SUSFS_SUS_OVERLAYFS=n" >> ./common/arch/arm64/configs/zuma_defconfig
 
     # Build kernel
     echo "Building kernel for $CONFIG..."
@@ -193,7 +183,7 @@ build_config() {
         # Modify config files for the default build process
         sed -i '2s/check_defconfig//' ./common/build.config.gki
         sed -i "s/dirty/'Wild+'/g" ./common/scripts/setlocalversion
-        LTO=full BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh
+        LTO=thin BUILD_CONFIG=common/build.config.gki.aarch64 build/build.sh
     
         # Copying to AnyKernel3
         echo "Copying Image.lz4 to $CONFIG/AnyKernel3..."
@@ -228,17 +218,17 @@ build_config() {
                 
                 echo 'Building boot.img'
                 mkbootimg.py --header_version 4 --kernel Image --output boot.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${DATE}"
-                avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+                avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
                 cp ./boot.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot.img
                 
                 echo 'Building boot-gz.img'
                 mkbootimg.py --header_version 4 --kernel Image.gz --output boot-gz.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${DATE}"
-            	avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+            	avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
                 cp ./boot-gz.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot-gz.img
 
                 echo 'Building boot-lz4.img'
                 mkbootimg.py --header_version 4 --kernel Image.lz4 --output boot-lz4.img --ramdisk out/ramdisk --os_version 12.0.0 --os_patch_level "${DATE}"
-                avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-lz4.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+                avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-lz4.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
                 cp ./boot-lz4.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot-lz4.img
                 cd ..
 
@@ -256,17 +246,17 @@ build_config() {
 
             echo 'Building boot.img'
             mkbootimg.py --header_version 4 --kernel Image --output boot.img
-            avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+            avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
             cp ./boot.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot.img
             
             echo 'Building boot-gz.img'
             mkbootimg.py --header_version 4 --kernel Image.gz --output boot-gz.img
-        	avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+        	avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-gz.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
             cp ./boot-gz.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot-gz.img
 
             echo 'Building boot-lz4.img'
             mkbootimg.py --header_version 4 --kernel Image.lz4 --output boot-lz4.img
-            avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-lz4.img --algorithm SHA256_RSA2048 --key testkey_rsa2048.pem
+            avbtool.py add_hash_footer --partition_name boot --partition_size $((64 * 1024 * 1024)) --image boot-lz4.img --algorithm SHA256_RSA2048 --key /home/james/keys/testkey_rsa2048.pem
             cp ./boot-lz4.img ../../../${ANDROID_VERSION}-${KERNEL_VERSION}.${SUB_LEVEL}_${DATE}-boot-lz4.img
             cd ..
         fi
@@ -277,7 +267,7 @@ build_config() {
         sed -i '2s/check_defconfig//' ./common/build.config.gki
         rm -rf ./common/android/abi_gki_protected_exports_aarch64
         rm -rf ./common/android/abi_gki_protected_exports_x86_64
-        tools/bazel build --lto=full --stamp //common:kernel_aarch64_dist
+        tools/bazel build --config=fast //common:kernel_aarch64_dist
         
 
         # Creating Boot imgs
@@ -366,43 +356,23 @@ FILES=($(find ./ -type f \( -name "*.zip" -o -name "*.img" \)))
 # GitHub repository details
 REPO_OWNER="TheWildJames"
 REPO_NAME="GKI_KernelSU_SUSFS"
+TAG_NAME="v$(date +'%Y.%m.%d-%H%M%S')"
+RELEASE_NAME="GKI Kernels With KernelSU & SUSFS v1.4.2"
+RELEASE_NOTES="This release contains KernelSU and SUSFS v1.4.2
 
-# Get the latest tag from the GitHub repository using the GitHub CLI
-LATEST_TAG=$(gh api repos/$REPO_OWNER/$REPO_NAME/tags --jq '.[0].name')
+Module: 
+https://github.com/sidex15/ksu_module_susfs
 
-# If no tags are found, default to 1.5.3-0
-if [ -z "$LATEST_TAG" ]; then
-    LATEST_TAG="1.5.3-0"
-fi
-
-# Increment the suffix after the dash
-NEW_TAG=$(echo "$LATEST_TAG" | awk -F- '{suffix=$2; if (!suffix) suffix=0; suffix++; printf "%s-%d", $1, suffix}')
-TAG_NAME="$NEW_TAG"
-
-#TAG_NAME="v1.5.3-$(date +'%Y.%m.%d-%H.%M.%S')"
-RELEASE_NAME="*TEST BUILD* GKI Kernels With KernelSU & SUSFS v1.5.3 *TEST BUILD*"
-RELEASE_NOTES="This release contains KernelSU and SUSFS v1.5.3
-
-Module: https://github.com/sidex15/ksu_module_susfs
-
-Official Manager:
-https://github.com/tiann/KernelSU
-Non-Official Managers:
+Manager:
 https://github.com/rifsxd/KernelSU-Next
-https://github.com/backslashxx/KernelSU
-https://github.com/rsuntk/KernelSU
-https://github.com/5ec1cff/KernelSU
-https://github.com/silvzr/KernelSU
-https://github.com/sidex15/KernelSU
 
 Features:
 [+] KernelSU-Next
-[+] SUSFS v1.5.3
+[+] SUSFS v1.4.2
 [+] Wireguard Support
 [+] Maphide LineageOS Detections
 [+] Futile Maphide for jit-zygote-cache Detections
 [+] Magic Mount Support
-[+] Built With LTO=Full, Optimizations For Improved Performance And Efficiency
 "
 
 # Create the GitHub release
@@ -410,9 +380,7 @@ echo "Creating GitHub release: $RELEASE_NAME..."
 gh release create "$TAG_NAME" "${FILES[@]}" \
     --repo "$REPO_OWNER/$REPO_NAME" \
     --title "$RELEASE_NAME" \
-    --notes "$RELEASE_NOTES" \
-    --prerelease \
-    --latest=false
+    --notes "$RELEASE_NOTES"
 
 echo "GitHub release created with the following files:"
 printf '%s\n' "${FILES[@]}"
