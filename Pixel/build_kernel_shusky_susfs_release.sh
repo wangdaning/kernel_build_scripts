@@ -58,51 +58,8 @@ patch -p1 --fuzz=3 < ./Makefile_fix.patch
 #build Kernel
 sed -i "/stable_scmversion_cmd/s/-maybe-dirty/-Wild+/g" ./build/kernel/kleaf/impl/stamp.bzl
 sed -i '2s/check_defconfig//' ./common/build.config.gki
-echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/redbull-gki_defconfig
-echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/redbull-gki_defconfig
-echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/redbull-gki_defconfig
+echo "CONFIG_KSU=y" >> ./common/arch/arm64/configs/shusky-gki_defconfig
+echo "CONFIG_KSU_SUSFS=y" >> ./common/arch/arm64/configs/shusky-gki_defconfig
+echo "CONFIG_KSU_SUSFS_SUS_SU=y" >> ./common/arch/arm64/configs/shusky-gki_defconfig
 cd ..
 BUILD_AOSP_KERNEL=1 ./build_shusky.sh
-
-# Copy Image.lz4
-echo "Copying Image.lz4"
-cp ./out/android-msm-pixel-4.19/dist/boot.img ./
-cp ./out/android-msm-pixel-4.19/dist/dtbo_barbet.img ./
-cp ./out/android-msm-pixel-4.19/dist/dtbo_redfin.img ./
-cp ./out/android-msm-pixel-4.19/dist/dtbo_bramble.img ./
-cp ./out/android-msm-pixel-4.19/dist/vendor_boot.img ./
-
-FILES=($(find ./ -maxdepth 1 -type f -name "*.img"))
-
-# GitHub Release using gh CLI
-REPO_OWNER="TheWildJames"         # Replace with your GitHub username
-REPO_NAME="Pixel_KernelSU_SUSFS"  # Replace with your repository name
-TAG_NAME="v$(date +'%Y.%m.%d-%H%M%S')"   # Unique tag with timestamp to ensure multiple releases on the same day
-RELEASE_NAME="Redbull With KernelSU & SUSFS"  # Updated release name
-RELEASE_NOTES="This release contains KernelSU and SUSFS v1.5.3
-
-Module: 
-https://github.com/sidex15/ksu_module_susfs
-
-Managers: 
-https://github.com/rifsxd/KernelSU-Next
-https://github.com/tiann/KernelSU
-
-Features:
-[+] KernelSU-Next
-[+] SUSFS v1.5.3
-[+] Maphide LineageOS Detections
-[+] Futile Maphide for jit-zygote-cache Detections
-[+] Magic Mount  
-"
-
-# Create the release using gh CLI (no need to include $ROOT_DIR)
-echo "Creating GitHub release for $RELEASE_NAME..."
-gh release create "$TAG_NAME" "${FILES[@]}" \
-  --repo "$REPO_OWNER/$REPO_NAME" \
-  --title "$RELEASE_NAME" \
-  --notes "$RELEASE_NOTES"
-
-# Final confirmation
-echo "GitHub release created and zip file uploaded."
-echo "Build and packaging process complete."
